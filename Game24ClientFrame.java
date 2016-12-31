@@ -21,87 +21,53 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.DefaultCaret;
 
+// Calc 24 game GUI mainframe class
 public class Game24ClientFrame extends JFrame {
-    String[] names;
-    int numPlayers;
-    // int [] points ;
-    JPanel[] players;
-    TitledBorder[] playerBorder;
-    JLabel[] pointLabel;
-    JButton[] cardButtons;
-    JButton[] operationButtons;
-    JButton submitButton;
-    JButton giveupButton;
-    JButton sendButton;
-    // String IPAddr;
-    // String name;
-    JTextField formula;
-    JTextArea incoming;
-    JTextField outgoing;
+    JPanel[] players; // Player panel
+    JLabel[] pointLabel; // JLabels for player points
+    JButton[] cardButtons; // JButtons for cards
+    JButton[] operationButtons;// Buttons for valid operations
+    JButton submitButton; // Submit answer button
+    JButton giveupButton; // Give up button
+    JButton sendButton; // Send chatting message button
+    JTextField formula; // JTextField for answer input
+    JTextArea incoming; // JTextArea for system information
+    JTextField outgoing; // JTextField for chatting message input
+
+    // constructor
     public Game24ClientFrame() {
-        super("24 Game");
+        super("Calc 24 Game");
         setLayout(new BoxLayout(this.getContentPane(), BoxLayout.LINE_AXIS));
-        /*
-         * //user input Server IP Address InputDialog IPDialog = new
-         * InputDialog(this, "IP Input", "Enter Server IP #"); IPAddr =
-         * IPDialog.nameField.getText(); //user name input InputDialog
-         * nameDialog = new InputDialog(this, "Player Name Input",
-         * "Enter your name"); name = nameDialog.nameField.getText();
-         */
-        // send the user name to server
-        // theClient.sendString(name);
-        // receive names from the server and display the player names
-        // TO DO : receive names
-        /*
-         * playerNumber=theClient.recvInt(); names=new String [playerNumber];
-         * for (int i=0;i<playerNumber;i++){ names[i]=theClient.recvString(); }
-         */
+        // left box to hold game frame
+        Box leftBox = new Box(BoxLayout.PAGE_AXIS);
 
-        numPlayers = 4;
-        names = new String[numPlayers];
-
-        for (int i = 0; i < numPlayers; i++) {
-            names[i] = i + "";
+        // players Panel to hold player info labels.
+        JPanel playersPan = new JPanel(new GridLayout(1, 4));
+        // initialize player labels
+        players = new JPanel[4];
+        pointLabel = new JLabel[4];
+        for (int i = 0; i < 4; i++) {
+            players[i] = new JPanel();
+            players[i].setBorder(BorderFactory.createTitledBorder("--"));
+            pointLabel[i] = new JLabel("N/A");
+            players[i].add(pointLabel[i]);
+            playersPan.add(players[i]);
         }
-        Box leftBox=new Box(BoxLayout.PAGE_AXIS);
-        JPanel playersPan = new JPanel(new GridLayout(1, names.length));
-        players = new JPanel[names.length];
-
-        // pointLabel is to display players' current points
-        pointLabel = new JLabel[names.length];
-        // points array is to store players' current points
-        // points = new int[numPlayers];
-
-        playerBorder = new TitledBorder[4];
-        for (int j = 0; j < names.length; j++) {
-            playerBorder[j] = BorderFactory.createTitledBorder(names[j]);
-            playerBorder[j].setTitleJustification(TitledBorder.LEFT);
-            players[j] = new JPanel();
-            players[j].setBorder(playerBorder[j]);
-            pointLabel[j] = new JLabel("0");
-            // points[j] = 0;
-            players[j].add(pointLabel[j]);
-            playersPan.add(players[j]);
-        }
-
         leftBox.add(playersPan);
 
         // display cards
-        // TO DO : receive pictures and add listener
         JPanel cardPan = new JPanel(new GridLayout(1, 4));
         cardButtons = new JButton[4];
         for (int i = 0; i < 4; i++) {
-            //cardButtons[i] = new JButton("card" + i);
-            //cardPan.add(cardButtons[i]);
-            java.net.URL imgURL = Game24ClientMain.class.getResource("images/"+i+".png");
+            java.net.URL imgURL = Game24ClientMain.class
+                    .getResource("images/" + i + ".png");
             ImageIcon image = new ImageIcon(imgURL);
             cardButtons[i] = new JButton(image);
             cardPan.add(cardButtons[i]);
         }
         leftBox.add(cardPan);
 
-        // add operations
-        // TO DO: add listener
+        // show available operations above the formula text area
         JPanel operationsPan = new JPanel(new GridLayout(1, 6));
         operationButtons = new JButton[6];
         operationButtons[0] = new JButton("+");
@@ -116,13 +82,10 @@ public class Game24ClientFrame extends JFrame {
         leftBox.add(operationsPan);
 
         // add JTextField to receive formula
-        // TO DO: send formula to the server
         formula = new JTextField(40);
-        String resolution = formula.getText();
         leftBox.add(formula);
 
         // add submit bottom
-        // TO DO: add listener
         JPanel bottomPan = new JPanel(new FlowLayout());
         submitButton = new JButton("submit");
         giveupButton = new JButton("give up");
@@ -132,13 +95,16 @@ public class Game24ClientFrame extends JFrame {
         bottomPan.add(giveupButton);
         leftBox.add(bottomPan);
         this.add(leftBox);
-        Box rightBox=new Box(BoxLayout.PAGE_AXIS);
+
+        // right box holds system info dash board and chatting message input
+        // area
+        Box rightBox = new Box(BoxLayout.PAGE_AXIS);
         incoming = new JTextArea(20, 25);
         incoming.setLineWrap(true);
         incoming.setWrapStyleWord(true);
         incoming.setEditable(false);
-        
-        DefaultCaret caret = (DefaultCaret)incoming.getCaret();
+        // Set auto scroll down for JTextArea
+        DefaultCaret caret = (DefaultCaret) incoming.getCaret();
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         incoming.append("System Announcement\n");
         incoming.append("Please wait for other players to get connected\n");
@@ -147,10 +113,11 @@ public class Game24ClientFrame extends JFrame {
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         qScroller.setHorizontalScrollBarPolicy(
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        // Initialize chatting message input text field
         outgoing = new JTextField(25);
         sendButton = new JButton("Send");
         sendButton.setEnabled(false);
-        //Add the Scroller
+        // Add the components to right box
         rightBox.add(qScroller);
         rightBox.add(outgoing);
         rightBox.add(sendButton);
@@ -158,8 +125,8 @@ public class Game24ClientFrame extends JFrame {
         this.setVisible(true);
         this.pack();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //Set shortCut for submit button 
-        JRootPane rootPane = SwingUtilities.getRootPane(submitButton); 
+        // Set shortCut for submit button (press "enter" for quick submit )
+        JRootPane rootPane = SwingUtilities.getRootPane(submitButton);
         rootPane.setDefaultButton(submitButton);
     }
 

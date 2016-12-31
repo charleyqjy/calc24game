@@ -6,38 +6,46 @@ import java.io.*;
 import java.net.*;
 import javax.swing.*;
 
+// Client class for the calc 24 game
 public class Game24Client {
-    String name;
-    Game24ClientFrame clientFrame;
-    // JTextArea incoming;
-    BufferedReader reader;
-    PrintWriter writer;
-    Socket sock;
+    String name; // name of the player
+    Game24ClientFrame clientFrame; // client GUI frame
+    BufferedReader reader; // socket reader
+    PrintWriter writer; // socket writer
+    Socket sock; // client socket
+    int numPlayers; // number of players in the game
 
+    // Constructor
     public Game24Client() {
+        // Initialize class fields
         clientFrame = new Game24ClientFrame();
         clientFrame.submitButton.addActionListener(new SubmitButtonListener());
         clientFrame.giveupButton.addActionListener(new GiveUpButtonListener());
         clientFrame.sendButton.addActionListener(new SendButtonListener());
-        // user input Server IP Address
-        InputDialog IPDialog = new InputDialog(clientFrame, "IP Input",
+        numPlayers = 4;
+        // Prompt user to input Server IP Address
+        InputDialog IPDialog = new InputDialog(clientFrame, "Server IP Input",
                 "Enter Server IP #");
         String ipAddr = IPDialog.nameField.getText();
-        // user name input
+        // Prompt user to input player name
         InputDialog nameDialog = new InputDialog(clientFrame,
                 "Player Name Input", "Enter your name");
         name = nameDialog.nameField.getText();
+        // Set up connection with server.
         setUpNetworking(ipAddr);
+        // Send player info to server
         writer.println(name + (char) 0);
         writer.flush();
         System.out.println("Client sent " + name);
-    }
+    }// constructor close
 
+    // Set up a thread for the client to keep receiving strings from the server.
     public void go() {
         Thread readerThread = new Thread(new IncomingReader());
         readerThread.start();
-    }
+    }// close go
 
+    // Set up connection with the server
     private void setUpNetworking(String ipAddr) {
         // make a Socket, then make a PrintWriter
         // assign the PrintWriter to writer instance variable
@@ -51,12 +59,12 @@ public class Game24Client {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-    }
+    }// close setUpNetworking
 
     // Listener class for the submit button
     public class SubmitButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            // get the text from the text field and
+            // get the text from the formula text field and
             // send it to the server using the writer (a PrintWriter)
             try {
                 writer.println("new answer");
@@ -73,10 +81,12 @@ public class Game24Client {
         }
     } // close SendButtonListener inner class
 
+    // Listener class for give up button
     public class GiveUpButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            // get the text from the text field and
-            // send it to the server using the writer (a PrintWriter)
+            // send give up indicator to server using the writer (a
+            // PrintWriter) and disable buttons to prevent players from
+            // submitting new answers
             try {
                 writer.println("new give up");
                 writer.println(name);
@@ -92,9 +102,10 @@ public class Game24Client {
         }
     } // close SendButtonListener inner class
 
+    // Listener class for send message button
     public class SendButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            // get the text from the text field and
+            // get the text from the chatting text field and
             // send it to the server using the writer (a PrintWriter)
             try {
                 writer.println("new chat");
@@ -110,37 +121,51 @@ public class Game24Client {
         }
     } // close SendButtonListener inner class
 
+    // Inner class to communicate with the server
     public class IncomingReader implements Runnable {
+        // Keep reading from the server. If received a string,
+        // take appropriate action according to the indicator string.
+        // Indicator string protocol:
+        // "name" for player names info
+        // "new image" for new round card set up
+        // "new scores" for player scores info
+        // "system info" for new system announcement
         public void run() {
             String message;
             try {
                 System.out.println("Client ready to receive message");
                 while ((message = reader.readLine()) != null) {
                     System.out.println("client received: " + message);
+                    // if "name", update the name of players on GUI.
                     if (message.equals("name")) {
-                        for (int i = 0; i < 4; i++) {
+                        for (int i = 0; i < numPlayers; i++) {
                             message = reader.readLine();
-                            System.out.println("Name Received: " + message);
-                            Game24Client.this.clientFrame.names[i] = message;
-                            Game24Client.this.clientFrame.playerBorder[i] = BorderFactory
-                                    .createTitledBorder(message);
+                            // System.out.println("Name Received: " + message);
+                            // Game24Client.this.clientFrame.names[i] = message;
+                            // Game24Client.this.clientFrame.playerBorder[i] =
+                            // BorderFactory.createTitledBorder(message);
                             Game24Client.this.clientFrame.players[i].setBorder(
-                                    Game24Client.this.clientFrame.playerBorder[i]);
+                                    BorderFactory.createTitledBorder(message));
                         }
                         clientFrame.sendButton.setEnabled(true);
-                    } else if (message.equals("new score")) {
-                        for (int i = 0; i < 4; i++) {
+                    } // end case "name"
+
+                    // if "new score", update player scores on GUI
+                    else if (message.equals("new score")) {
+                        for (int i = 0; i < numPlayers; i++) {
                             message = reader.readLine();
                             System.out.println("Score Received: " + message);
                             Game24Client.this.clientFrame.pointLabel[i]
                                     .setText(message);
                         }
-                    } else if (message.equals("new image")) {
+                    } // end case "new score"
+
+                    // if "new image", update card images on GUI.
+                    else if (message.equals("new image")) {
                         for (int i = 0; i < 4; i++) {
                             message = reader.readLine();
                             System.out.println(
                                     "Image number Received: " + message);
-                            // TODO: Update JButton image
                             java.net.URL imgURL = Game24Client.class
                                     .getResource("images/" + message + ".png");
                             ImageIcon image = new ImageIcon(imgURL);
@@ -149,16 +174,24 @@ public class Game24Client {
                         }
                         clientFrame.submitButton.setEnabled(true);
                         clientFrame.giveupButton.setEnabled(true);
-                    } else if (message.equals("system info")) {
+                    } // end case "new image"
+
+                    // if "system info", update system announcement area
+                    else if (message.equals("system info")) {
                         message = reader.readLine();
                         System.out.println("System info Received: " + message);
                         Game24Client.this.clientFrame.incoming
                                 .append(message + "\n");
+                    } // end case "system info"
+                    
+                    else if (message.equals("number of players")) {
+                        message = reader.readLine();
+                        numPlayers = Integer.parseInt(message);
                     }
-                } // close while
+                } // while
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         } // close run
-    } // close inner class
+    } // close IncomingReader class
 }// close outer class

@@ -3,6 +3,7 @@ package game24;
 import java.util.Vector;
 import static game24.CheckAnswer.CheckAnswer;
 
+// Check answer function test driver.
 public class CheckAnswerTest {
     public static void main(String[] args) {
         int[] arr = new int[4];
